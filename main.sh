@@ -38,9 +38,12 @@ main(){
     done
   }
 
-  [ -n "$result" ] \
-    && printf '%s\n' "${result}" \
-    || ERX "no matching window."
+  if [ -n "$result" ]; then
+    printf '%s\n' "${result}"
+  else
+    ERX "no matching window."
+  fi
+  
 }
 
 ___source="$(readlink -f "${BASH_SOURCE[0]}")"  #bashbud

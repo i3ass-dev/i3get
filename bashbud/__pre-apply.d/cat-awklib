@@ -8,9 +8,13 @@ projectdir="$1"
     echo '#!/usr/bin/env bash'
     echo
     echo 'awklib() {'
+    echo 'if [[ -n ${___dir:-} ]]; then #bashbud'
+    echo 'cat "${___dir}/awklib/"*.awk #bashbud'
+    echo 'else #bashbud'
     echo "cat << 'EOB'"
     cat "$projectdir/awklib/"*
     echo 'EOB'
+    echo 'fi #bashbud'
     echo '}'
   } > "$projectdir/lib/awklib.sh"  
 }

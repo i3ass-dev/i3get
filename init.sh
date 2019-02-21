@@ -3,8 +3,8 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-i3get - version: 0.341
-updated: 2019-02-19 by budRich
+i3get - version: 0.344
+updated: 2019-02-21 by budRich
 EOB
 }
 
@@ -133,8 +133,7 @@ elif [[ ${__o[version]:-} = 1 ]]; then
 fi
 
 [[ ${__lastarg:="${!#:-}"} =~ ^--$|${0}$ ]] \
-  && __lastarg="" \
-  || true
+  && __lastarg="" 
 
 
 

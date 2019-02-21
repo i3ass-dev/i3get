@@ -14,18 +14,7 @@ start == 1 && match($0,/([{]|"nodes":[}][[]|.*_rect":{)?"([a-z_]+)":[["]*([^]}"]
 
   key=ma[2]
   var=ma[3]
-
-  if (hit!=trg) {
-    for (c in crit) {
-      # if (key == c) {print crit[c] "  s " var}
-      if (key == c && var ~ crit[c]) {
-        if (fid==cid) {hit++}
-        else {hit=1;fid=cid}
-      }
-    }
-  }
-
-
+  
   # on every id, check if target is found, if so exit
   # otherwise clear return array (except workspace key)
   if (key == "id") {
@@ -35,6 +24,15 @@ start == 1 && match($0,/([{]|"nodes":[}][[]|.*_rect":{)?"([a-z_]+)":[["]*([^]}"]
     for(k in r){if(k!="w"){r[k]=""}}
     if(sret ~ /[n]/)
       r["n"]=cid
+  }
+
+  if (hit!=trg) {
+    for (c in crit) {
+      if (key == c && var ~ crit[c]) {
+        if (fid==cid) {hit++}
+        else {hit=1;fid=cid}
+      }
+    }
   }
 
   if (sret ~ /[t]/ && key == "title") {

@@ -2,7 +2,7 @@
 description: >
   Boilerplate and template maker for bash scripts
 updated:       2019-02-21
-version:       0.346
+version:       0.347
 author:        budRich
 repo:          https://github.com/budlabs/i3ass
 created:       2017-03-08

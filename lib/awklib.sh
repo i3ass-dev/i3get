@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
 awklib() {
+if [[ -n ${___dir:-} ]]; then #bashbud
+cat "${___dir}/awklib/"*.awk #bashbud
+else #bashbud
 cat << 'EOB'
 BEGIN {hit=0;start=0;trg=0}
 
@@ -90,4 +93,5 @@ END{
   }
 }
 EOB
+fi #bashbud
 }

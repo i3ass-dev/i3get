@@ -1,12 +1,7 @@
 # i3get - Boilerplate and template maker for bash scripts 
 
-### usage
-
-```text
-i3get [--class|-c CLASS] [--instance|-i INSTANCE] [--title|-t TITLE] [--conid|-n CON_ID] [--winid|-d WIN_ID] [--mark|-m MARK] [--titleformat|-o TITLE_FORMAT] [--active|-a] [--synk|-y] [--print|-r OUTPUT]      
-i3get --help|-h
-i3get --version|-v
-```
+USAGE
+-----
 
 Search for `CRITERIA` in the output of `i3-msg -t
 get_tree`, return desired information. If no arguments are
@@ -17,6 +12,13 @@ results.
 
 OPTIONS
 -------
+
+```text
+i3get [--class|-c CLASS] [--instance|-i INSTANCE] [--title|-t TITLE] [--conid|-n CON_ID] [--winid|-d WIN_ID] [--mark|-m MARK] [--titleformat|-o TITLE_FORMAT] [--active|-a] [--synk|-y] [--print|-r OUTPUT]      
+i3get --help|-h
+i3get --version|-v
+```
+
 
 `--class`|`-c` CLASS  
 Search for windows with the given class
@@ -71,6 +73,7 @@ Show version and exit
 
 EXAMPLES
 --------
+
 search for window with instance name sublime_text.  Request
 workspace, title and floating state.  
 

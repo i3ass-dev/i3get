@@ -10,11 +10,19 @@ start == 0 {
   }
 }
 
-start == 1 && match($0,/([{]|"nodes":[}][[]|.*_rect":{)?"([a-z_]+)":[["]*([^]}"]*)[]}"]*$/,ma) {
+# "window_properties":{"class":"URxvt"
 
+start == 1 && match($0,/([{]|"nodes":[}][[]|.*_rect":{|"window_properties":{)?"([a-z_]+)":[["]*(.+)$/,ma) {
+# start == 1 && match($0,/([{]|"nodes":[}][[]|.*_rect":{)?"([a-z_]+)":[["]*([^]}"]*)[]}"]*$/,ma) {
   key=ma[2]
-  var=ma[3]
-  
+  if (key == "title") {
+    var=gensub(/"$/,"",1,ma[3])
+  }
+  else {
+    var=gensub(/[]}"]/,"",1,ma[3])
+  }
+
+
   # on every id, check if target is found, if so exit
   # otherwise clear return array (except workspace key)
   if (key == "id") {

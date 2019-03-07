@@ -3,7 +3,7 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-i3get - version: 0.348
+i3get - version: 0.349
 updated: 2019-03-07 by budRich
 EOB
 }
@@ -162,11 +162,11 @@ start == 0 {
   }
 }
 
-# "window_properties":{"class":"URxvt"
 
 start == 1 && match($0,/([{]|"nodes":[}][[]|.*_rect":{|"window_properties":{)?"([a-z_]+)":[["]*(.+)$/,ma) {
-# start == 1 && match($0,/([{]|"nodes":[}][[]|.*_rect":{)?"([a-z_]+)":[["]*([^]}"]*)[]}"]*$/,ma) {
+
   key=ma[2]
+  
   if (key == "title") {
     var=gensub(/"$/,"",1,ma[3])
   }

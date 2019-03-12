@@ -10,8 +10,7 @@ start == 0 {
   }
 }
 
-
-start == 1 && match($0,/([{]|"nodes":[}][[]|.*_rect":{|"window_properties":{)?"([a-z_]+)":[["]*(.+)$/,ma) {
+start == 1 && match($0,/([{]|"nodes":[[][{]|.*_rect":{|"window_properties":{)?"([a-z_]+)":[["]*(.+)$/,ma) {
 
   key=ma[2]
   

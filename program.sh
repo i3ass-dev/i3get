@@ -3,8 +3,8 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-i3get - version: 0.35
-updated: 2019-03-12 by budRich
+i3get - version: 0.354
+updated: 2020-06-01 by budRich
 EOB
 }
 
@@ -59,7 +59,7 @@ main(){
 ___printhelp(){
   
 cat << 'EOB' >&2
-i3get - Boilerplate and template maker for bash scripts
+i3get - prints info about a specific window to stdout
 
 
 SYNOPSIS

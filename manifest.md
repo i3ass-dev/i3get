@@ -1,8 +1,8 @@
 ---
 description: >
-  Boilerplate and template maker for bash scripts
-updated:       2019-03-12
-version:       0.35
+  prints info about a specific window to stdout
+updated:       2020-06-01
+version:       0.354
 author:        budRich
 repo:          https://github.com/budlabs/i3ass
 created:       2017-03-08

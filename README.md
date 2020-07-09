@@ -1,4 +1,4 @@
-# i3get - Boilerplate and template maker for bash scripts 
+# i3get - prints info about a specific window to stdout 
 
 USAGE
 -----

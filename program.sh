@@ -3,7 +3,7 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-i3get - version: 0.355
+i3get - version: 0.356
 updated: 2020-07-10 by budRich
 EOB
 }
@@ -263,6 +263,30 @@ getwindow(){
   } | awk -v RS=',' -F':' -v sret="${__o[print]:-n}" -f <(awklib)
     
 }
+
+
+_re=$(cat << EOB
+"id":(${_c[conid]:-"[0-9]+"}),
+[^{]+
+"focused":${_c[active]},
+[^}]+},
+[^}]+},
+[^}]+},
+[^}]+},
+[^,]+,
+"title_format":"(${_c[format]:-"[^\"]+"})",
+"window":(${_c[winid]:-"[0-9]+"}),
+[^,]+,
+"window_properties":\{"class":"(${_c[class]:-"[^\"]+"})",
+"instance":"(${_c[instance]:-"[^\"]+"})",
+"title":"(${_c[title]:-"[^\"]+"})",
+"transient_for":[^,]+,
+[^{}]+,
+"fullscreen_mode":([0-9]),
+"sticky":(false|true),
+"floating":"([^\"]+)",
+EOB
+)
 declare -A __o
 eval set -- "$(getopt --name "i3get" \
   --options "c:i:t:n:d:m:o:ayr:hv" \

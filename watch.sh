@@ -12,7 +12,6 @@ done < <(
               --recursive --monitor        \
               --exclude 'awklib[.]sh$'     \
               "$_dir"/lib/*.sh             \
-              "$_dir"/awklib/*             \
               "$_dir/main.sh"              \
               "$_dir/manifest.md"
 )

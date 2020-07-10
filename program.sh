@@ -3,8 +3,8 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-i3get - version: 0.354
-updated: 2020-06-01 by budRich
+i3get - version: 0.355
+updated: 2020-07-10 by budRich
 EOB
 }
 
@@ -113,6 +113,7 @@ after 10 seconds).
 OUTPUT can be one or more of the following 
 characters:  
 
+
 |character | print
 |:---------|:-----
 |t       | title  
@@ -126,7 +127,6 @@ characters:
 |f       | floating state  
 |o       | title format  
 |v       | visible state  
-
 
 --help|-h  
 Show help and exit.

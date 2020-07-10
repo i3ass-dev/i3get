@@ -53,6 +53,7 @@ after 10 seconds*).
 *OUTPUT* can be one or more of the following 
 characters:  
 
+
 |character | print
 |:---------|:-----
 |`t`       | title  

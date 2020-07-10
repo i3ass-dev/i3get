@@ -1,8 +1,8 @@
 ---
 description: >
   prints info about a specific window to stdout
-updated:       2020-06-01
-version:       0.354
+updated:       2020-07-10
+version:       0.371
 author:        budRich
 repo:          https://github.com/budlabs/i3ass
 created:       2017-03-08

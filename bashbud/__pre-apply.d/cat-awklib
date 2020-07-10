@@ -8,7 +8,7 @@ projectdir="$1"
     echo '#!/usr/bin/env bash'
     echo
     echo 'awklib() {'
-    echo 'target="${1:-main}"'
+    echo 'target=main'
     echo 'if [[ -n ${___dir:-} ]]; then #bashbud'
     echo '  if [[ $target = main ]]; then #bashbud'
     echo '    find "${___dir}/awklib" -maxdepth 1 -type f -exec cat "{}" \; #bashbud'

@@ -8,7 +8,8 @@ getwindow(){
 
     echo -n "__START__,"
 
-    i3-msg -t get_tree
-  } | awk -v RS=',' -F':' -v sret="${__o[print]:-n}" -f <(awklib)
+    # i3-msg -t get_tree
+    cat /dev/stdin
+  } | awk -f <(awklib) RS=, FS=: sret="${__o[print]:-n}"
     
 }

@@ -3,8 +3,8 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-i3get - version: 0.354
-updated: 2020-06-01 by budRich
+i3get - version: 0.371
+updated: 2020-07-10 by budRich
 EOB
 }
 
@@ -37,7 +37,7 @@ main(){
   # if no search is given, search for active window
   ((${#__crit[@]}==0)) && __crit[focused]="true"
 
-  result="$(getwindow)"
+  result="$(i3-msg -t get_tree | getwindow)"
 
   ((${__o[synk]:-0}==1)) && {
     # timeout after 10 seconds
@@ -113,6 +113,7 @@ after 10 seconds).
 OUTPUT can be one or more of the following 
 characters:  
 
+
 |character | print
 |:---------|:-----
 |t       | title  
@@ -127,7 +128,6 @@ characters:
 |o       | title format  
 |v       | visible state  
 
-
 --help|-h  
 Show help and exit.
 
@@ -140,7 +140,7 @@ EOB
 
 
 awklib() {
-target="${1:-main}"
+target=main
 if [[ -n ${___dir:-} ]]; then #bashbud
   if [[ $target = main ]]; then #bashbud
     find "${___dir}/awklib" -maxdepth 1 -type f -exec cat "{}" \; #bashbud
@@ -153,7 +153,7 @@ cat << 'EOB'
 BEGIN {hit=0;start=0;trg=0}
 
 # set crit array
-start == 0 {
+!start {
   if ($0 == "__START__") {
     start = 1
   } else if (/./) {
@@ -162,15 +162,15 @@ start == 0 {
   }
 }
 
-start == 1 && match($0,/([{]|"nodes":[[][{]|.*_rect":{|"window_properties":{)?"([a-z_]+)":[["]*(.+)$/,ma) {
+start && match($0,/([{]|"nodes":[[][{]|.*_rect":{|"window_properties":{)?"([a-z_]+)":(.+)$/,ma) {
 
   key=ma[2]
   
   if (key == "title") {
-    var=gensub(/"$/,"",1,ma[3])
+    var=gensub(/^"|"$/,"","g",ma[3])
   }
   else {
-    var=gensub(/[]}"]/,"",1,ma[3])
+    var=gensub(/[][}"]/,"","g",ma[3])
   }
 
 
@@ -194,41 +194,86 @@ start == 1 && match($0,/([{]|"nodes":[[][{]|.*_rect":{|"window_properties":{)?"(
     }
   }
 
-  if (sret ~ /[t]/ && key == "title") {
-    r["t"]=gensub($1":","",1,$0)
+  switch (key) {
+    case "title":
+      if (sret ~ /[t]/) r["t"]=gensub($1":","",1,$0)
+      break
+    case "class":
+      if (sret ~ /[c]/) r["c"]=var
+      break
+    case "instance":
+      if (sret ~ /[i]/) r["i"]=var
+      break
+    case "window":
+      if (sret ~ /[d]/) r["d"]=var
+      break
+    case "marks":
+      if (sret ~ /[m]/) r["m"]=var
+      break
+    case "focused":
+      if (sret ~ /[a]/) r["a"]=var
+      break
+    case "title_format":
+      if (sret ~ /[o]/) r["o"]=var
+      break
+    case "num":
+      if (sret ~ /[w]/) r["w"]=var
+      break
+    case "floating":
+      if (sret ~ /[f]/) r["f"]=var
+      break
   }
+
+  #   case 3:
+  #   case "11":
+  #     print NR - 1
+  #     break
+
+  #   case /2[[:digit:]]+/:
+  #     print NR
+
+  #   default:
+  #     print NR + 1
+
+  #   case -1:
+  #     print NR * -1
+  #   }
+
+  # if (sret ~ /[t]/ && key == "title") {
+  #   r["t"]=gensub($1":","",1,$0)
+  # }
   
-  if (sret ~ /[c]/ && key == "class") {
-    r["c"]=var
-  }
+  # if (sret ~ /[c]/ && key == "class") {
+  #   r["c"]=var
+  # }
   
-  if (sret ~ /[i]/ && key == "instance") {
-    r["i"]=var
-  }
+  # if (sret ~ /[i]/ && key == "instance") {
+  #   r["i"]=var
+  # }
   
-  if (sret ~ /[d]/ && key == "window") {
-    r["d"]=var
-  }
+  # if (sret ~ /[d]/ && key == "window") {
+  #   r["d"]=var
+  # }
   
-  if (sret ~ /[m]/ && key == "marks") {
-    r["m"]=var
-  }
+  # if (sret ~ /[m]/ && key == "marks") {
+  #   r["m"]=ma[3]
+  # }
   
-  if (sret ~ /[a]/ && key == "focused") {
-    r["a"]=var
-  }
+  # if (sret ~ /[a]/ && key == "focused") {
+  #   r["a"]=var
+  # }
   
-  if (sret ~ /[o]/ && key == "title_format") {
-    r["o"]=var
-  }
+  # if (sret ~ /[o]/ && key == "title_format") {
+  #   r["o"]=var
+  # }
   
-  if (sret ~ /[w]/ && key == "num") {
-    r["w"]=var
-  }
+  # if (sret ~ /[w]/ && key == "num") {
+  #   r["w"]=var
+  # }
   
-  if (sret ~ /[f]/ && key == "floating") {
-    r["f"]=var
-  }
+  # if (sret ~ /[f]/ && key == "floating") {
+  #   r["f"]=var
+  # }
 
 }
 
@@ -259,8 +304,9 @@ getwindow(){
 
     echo -n "__START__,"
 
-    i3-msg -t get_tree
-  } | awk -v RS=',' -F':' -v sret="${__o[print]:-n}" -f <(awklib)
+    # i3-msg -t get_tree
+    cat /dev/stdin
+  } | awk -f <(awklib) RS=, FS=: sret="${__o[print]:-n}"
     
 }
 declare -A __o

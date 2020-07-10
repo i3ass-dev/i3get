@@ -10,8 +10,9 @@ while read -r ; do
 done < <(
   inotifywait --event close_write          \
               --recursive --monitor        \
-              --exclude 'createconf[.]sh$' \
+              --exclude 'awklib[.]sh$'     \
               "$_dir"/lib/*.sh             \
+              "$_dir"/awklib/*             \
               "$_dir/main.sh"              \
               "$_dir/manifest.md"
 )

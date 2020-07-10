@@ -51,6 +51,7 @@ till target window exist. (*or timeout after 10 seconds*).
 `--print`|`-r` OUTPUT  
 *OUTPUT* can be one or more of the following  characters:  
 
+
 |character | print
 |:---------|:-----
 |`t`       | title  

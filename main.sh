@@ -27,7 +27,7 @@ main(){
   # if no search is given, search for active window
   ((${#__crit[@]}==0)) && __crit[focused]="true"
 
-  result="$(getwindow)"
+  result="$(i3-msg -t get_tree | getwindow)"
 
   ((${__o[synk]:-0}==1)) && {
     # timeout after 10 seconds

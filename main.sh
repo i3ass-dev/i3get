@@ -1,35 +1,81 @@
 #!/usr/bin/env bash
 
 main(){
-  local o result
 
-  declare -A __crit
+  declare -A _c
 
   for o in "${!__o[@]}"; do
     [[ $o =~ synk|active|print ]] && continue
-
-    if [[ $o = conid ]]; then
-      __crit[id]="${__o[$o]}"
-    elif [[ $o = winid ]]; then
-      __crit[window]="${__o[$o]}"
-    elif [[ $o = mark ]]; then
-      __crit[marks]="${__o[$o]}"
-    elif [[ $o = titleformat ]]; then
-      __crit[title_format]="${__o[$o]}"
-    else
-      __crit[$o]="${__o[$o]}"
-    fi
-
+    _c[$o]="${__o[$o]}"
   done
-
-  ((${__o[active]:-0}==1)) && __crit[focused]="true"
+  
+  ((__o[active])) && _c[active]=true
 
   # if no search is given, search for active window
-  ((${#__crit[@]}==0)) && __crit[focused]="true"
+  ((${#_c[@]})) || _c[active]=true
+  : "${_c[active]:=true|false}"
+  ret=${__o[print]:-n}
 
-  result="$(i3-msg -t get_tree | getwindow)"
+_re=$(cat << EOB
+"id":(${_c[conid]:-"[0-9]+"}),
+[^{]+
+"focused":${_c[active]},
+[^}]+},
+[^}]+},
+[^}]+},
+[^}]+},
+[^,]+,
+"title_format":"(${_c[format]:-"[^\"]+"})",
+"window":(${_c[winid]:-"[0-9]+"}),
+[^,]+,
+"window_properties":\{"class":"(${_c[class]:-"[^\"]+"})",
+"instance":"(${_c[instance]:-"[^\"]+"})",
+"title":"(${_c[title]:-"[^\"]+"})",
+"transient_for":[^,]+,
+[^{}]+,
+"fullscreen_mode":([0-9]),
+"sticky":(false|true),
+"floating":"([^\"]+)",
+EOB
+)
 
-  ((${__o[synk]:-0}==1)) && {
+  getworkspace() {
+    local re
+
+    re="\"num@\":(${_c[workspace]:-"[0-9-]+"}),[^@]+"
+    re+="$_re"
+
+    [[ ${_json//\"num\":/\"num@\":} =~ ${re//$'\n'/} ]] \
+      && echo "${BASH_REMATCH[1]}"
+  }
+
+  _json=${__o[json]:-$(i3-msg -t get_tree)}
+
+  [[ $_json =~ ${_re//$'\n'/} ]] && {
+
+    declare -A ma
+    ma=(
+      [n]="${BASH_REMATCH[1]}"
+      [o]="${BASH_REMATCH[2]}"
+      [d]="${BASH_REMATCH[3]}"
+      [c]="${BASH_REMATCH[4]}"
+      [i]="${BASH_REMATCH[5]}"
+      [t]="${BASH_REMATCH[6]}"
+      [e]="${BASH_REMATCH[7]}"
+      [s]="${BASH_REMATCH[8]}"
+      [f]="${BASH_REMATCH[9]}"
+    )
+
+    for ((i=0;i<${#ret};i++)); do
+      [[ ${ret:$i:1} = w ]] && ma[w]=$(getworkspace)
+      op+=("${ma[${ret:$i:1}]}")
+    done
+
+    # printf '%s\n' "${op[@]}"
+    
+  }
+
+  ((__o[synk])) && {
     # timeout after 10 seconds
     for ((i=0;i<100;i++)); do 
       sleep 0.1
@@ -38,8 +84,8 @@ main(){
     done
   }
 
-  if [ -n "$result" ]; then
-    printf '%s\n' "${result}"
+  if [ -n "${op[*]}" ]; then
+    printf '%s\n' "${op[@]}"
   else
     ERX "no matching window."
   fi

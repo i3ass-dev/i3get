@@ -3,7 +3,7 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-i3get - version: 0.383
+i3get - version: 0.416
 updated: 2020-07-10 by budRich
 EOB
 }
@@ -26,16 +26,7 @@ main(){
   : "${_c[active]:=true|false}"
   ret=${__o[print]:-n}
 
-  getworkspace() {
-    local re
-
-    re="\"num@\":(${_c[workspace]:-"[0-9-]+"}),[^@]+"
-    re+="$_re"
-
-    [[ ${_json//\"num\":/\"num@\":} =~ ${re//$'\n'/} ]] \
-      && echo "${BASH_REMATCH[1]}"
-  }
-
+  _re=$(makeexpression)
   _json=${__o[json]:-$(i3-msg -t get_tree)}
 
   [[ $_json =~ ${_re//$'\n'/} ]] && {
@@ -43,33 +34,64 @@ main(){
     declare -A ma
     ma=(
       [n]="${BASH_REMATCH[1]}"
-      [o]="${BASH_REMATCH[2]}"
-      [d]="${BASH_REMATCH[3]}"
-      [c]="${BASH_REMATCH[4]}"
-      [i]="${BASH_REMATCH[5]}"
-      [t]="${BASH_REMATCH[6]}"
-      [e]="${BASH_REMATCH[7]}"
-      [s]="${BASH_REMATCH[8]}"
-      [f]="${BASH_REMATCH[9]}"
+      [m]="${BASH_REMATCH[2]}"
+      [m]="${BASH_REMATCH[3]}"
+      [a]="${BASH_REMATCH[4]}"
+      [o]="${BASH_REMATCH[5]}"
+      [d]="${BASH_REMATCH[6]}"
+      [c]="${BASH_REMATCH[7]}"
+      [i]="${BASH_REMATCH[8]}"
+      [t]="${BASH_REMATCH[9]}"
+      [e]="${BASH_REMATCH[10]}"
+      [s]="${BASH_REMATCH[11]}"
+      [f]="${BASH_REMATCH[12]}"
     )
 
     for ((i=0;i<${#ret};i++)); do
       [[ ${ret:$i:1} = w ]] && ma[w]=$(getworkspace)
       op+=("${ma[${ret:$i:1}]}")
     done
-
-    # printf '%s\n' "${op[@]}"
     
   }
 
-  ((__o[synk])) && {
-    # timeout after 10 seconds
-    for ((i=0;i<100;i++)); do 
-      sleep 0.1
-      result=$(getwindow)
-      [ -n "$result" ] && break
+  ((__o[synk])) \
+    && while read -r line < <(i3-msg -mt subscribe '["window"]'); do
+
+      [[ $line =~ ${_re//$'\n'/} ]] && {
+
+        declare -A ma
+        ma=(
+          [n]="${BASH_REMATCH[1]}"
+          [m]="${BASH_REMATCH[2]}"
+          [m]="${BASH_REMATCH[3]}"
+          [a]="${BASH_REMATCH[4]}"
+          [o]="${BASH_REMATCH[5]}"
+          [d]="${BASH_REMATCH[6]}"
+          [c]="${BASH_REMATCH[7]}"
+          [i]="${BASH_REMATCH[8]}"
+          [t]="${BASH_REMATCH[9]}"
+          [e]="${BASH_REMATCH[10]}"
+          [s]="${BASH_REMATCH[11]}"
+          [f]="${BASH_REMATCH[12]}"
+        )
+
+        for ((i=0;i<${#ret};i++)); do
+          [[ ${ret:$i:1} = w ]] && ma[w]=$(getworkspace)
+          op+=("${ma[${ret:$i:1}]}")
+        done
+
+        break
+      }
     done
-  }
+
+  # ((__o[synk])) && {
+  #   # timeout after 10 seconds
+  #   for ((i=0;i<100;i++)); do 
+  #     sleep 0.1
+  #     result=$(getwindow)
+  #     [ -n "$result" ] && break
+  #   done
+  # }
 
   if [ -n "${op[*]}" ]; then
     printf '%s\n' "${op[@]}"
@@ -166,11 +188,28 @@ ERM(){ >&2 echo "$*"; }
 ERR(){ >&2 echo "[WARNING]" "$*"; }
 ERX(){ >&2 echo "[ERROR]" "$*" && exit 1 ; }
 
+getworkspace() {
+  local re
 
-_re=$(cat << EOB
+  special=@
+  re="\"num$special\":(${_c[workspace]:-"[0-9-]+"}),[^$special]+"
+  re+="$_re"
+
+  [[ ${_json//\"num\":/\"num@\":} =~ ${re//$'\n'/} ]] \
+    && echo "${BASH_REMATCH[1]}"
+}
+makeexpression() {
+
+local mark
+mark='("marks":(\[[^]]*\]),)?'
+[[ -n ${_c[mark]} ]] \
+  && mark="(\"marks\":(\[[^]]*\"${_c[mark]}\"[^]]*\]),)"
+
+cat << EOB
 "id":(${_c[conid]:-"[0-9]+"}),
 [^{]+
-"focused":${_c[active]},
+${mark}
+"focused":(${_c[active]}),
 [^}]+},
 [^}]+},
 [^}]+},
@@ -188,7 +227,7 @@ _re=$(cat << EOB
 "sticky":(false|true),
 "floating":"([^\"]+)",
 EOB
-)
+}
 declare -A __o
 eval set -- "$(getopt --name "i3get" \
   --options "c:i:t:n:d:m:o:ayr:hv" \

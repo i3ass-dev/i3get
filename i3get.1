@@ -1,5 +1,5 @@
 .nh
-.TH I3GET 1 2020\-07\-10 Linux "User Manuals"
+.TH I3GET 1 2020\-07\-11 Linux "User Manuals"
 .SH NAME
 .PP
 \fB\fCi3get\fR \- prints info about a specific window to
@@ -10,7 +10,7 @@ stdout
 .RS
 
 .nf
-i3get [\-\-class|\-c CLASS] [\-\-instance|\-i INSTANCE] [\-\-title|\-t TITLE] [\-\-conid|\-n CON\_ID] [\-\-winid|\-d WIN\_ID] [\-\-mark|\-m MARK] [\-\-titleformat|\-o TITLE\_FORMAT] [\-\-active|\-a] [\-\-synk|\-y] [\-\-print|\-r OUTPUT]      
+i3get [\-\-class|\-c CLASS] [\-\-instance|\-i INSTANCE] [\-\-title|\-t TITLE] [\-\-conid|\-n CON\_ID] [\-\-winid|\-d WIN\_ID] [\-\-mark|\-m MARK] [\-\-titleformat|\-o TITLE\_FORMAT] [\-\-active|\-a] [\-\-synk|\-y] [\-\-print|\-r OUTPUT] [\-\-json TREE]      
 i3get \-\-help|\-h
 i3get \-\-version|\-v
 
@@ -81,21 +81,28 @@ characters:
 
 .TS
 allbox;
-l l 
-l l .
-\fB\fCcharacter\fR	\fB\fCprint\fR
-\fB\fCt\fR	title
-\fB\fCc\fR	class
-\fB\fCi\fR	instance
-\fB\fCd\fR	Window ID
-\fB\fCn\fR	Con\_Id (default)
-\fB\fCm\fR	mark
-\fB\fCw\fR	workspace
-\fB\fCa\fR	is active
-\fB\fCf\fR	floating state
-\fB\fCo\fR	title format
-\fB\fCv\fR	visible state
+l l l 
+l l l .
+\fB\fCcharacter\fR	\fB\fCprint\fR	\fB\fCreturn\fR
+\fB\fCt\fR	title	string
+\fB\fCc\fR	class	string
+\fB\fCi\fR	instance	string
+\fB\fCd\fR	Window ID	INT
+\fB\fCn\fR	Con\_Id (default)	INT
+\fB\fCm\fR	mark	JSON list
+\fB\fCw\fR	workspace	INT
+\fB\fCa\fR	is active	true
+\fB\fCf\fR	floating state	string
+\fB\fCo\fR	title format	string
+\fB\fCe\fR	fullscreen	1
+\fB\fCs\fR	sticky	true
 .TE
+
+.PP
+\fB\fC\-\-json\fR TREE
+.br
+Use TREE instead of the output of \fB\fCi3\-msg \-t
+get\_tree\fR
 
 .PP
 \fB\fC\-\-help\fR|\fB\fC\-h\fR

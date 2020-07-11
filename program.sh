@@ -3,8 +3,8 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-i3get - version: 0.416
-updated: 2020-07-10 by budRich
+i3get - version: 0.571
+updated: 2020-07-11 by budRich
 EOB
 }
 
@@ -12,93 +12,30 @@ EOB
 
 main(){
 
-  declare -A _c
+  declare -a _op      # output, populated in match()
+  declare _expression # makeexpression() via match()
 
-  for o in "${!__o[@]}"; do
-    [[ $o =~ synk|active|print ]] && continue
-    _c[$o]="${__o[$o]}"
-  done
-  
-  ((__o[active])) && _c[active]=true
+  [[ -f ${__o[json]} ]] && _json=$(< "${__o[json]}")
+  : "${_json:=$(i3-msg -t get_tree)}"
 
-  # if no search is given, search for active window
-  ((${#_c[@]})) || _c[active]=true
-  : "${_c[active]:=true|false}"
-  ret=${__o[print]:-n}
+  match "$_json"
 
-  _re=$(makeexpression)
-  _json=${__o[json]:-$(i3-msg -t get_tree)}
-
-  [[ $_json =~ ${_re//$'\n'/} ]] && {
-
-    declare -A ma
-    ma=(
-      [n]="${BASH_REMATCH[1]}"
-      [m]="${BASH_REMATCH[2]}"
-      [m]="${BASH_REMATCH[3]}"
-      [a]="${BASH_REMATCH[4]}"
-      [o]="${BASH_REMATCH[5]}"
-      [d]="${BASH_REMATCH[6]}"
-      [c]="${BASH_REMATCH[7]}"
-      [i]="${BASH_REMATCH[8]}"
-      [t]="${BASH_REMATCH[9]}"
-      [e]="${BASH_REMATCH[10]}"
-      [s]="${BASH_REMATCH[11]}"
-      [f]="${BASH_REMATCH[12]}"
-    )
-
-    for ((i=0;i<${#ret};i++)); do
-      [[ ${ret:$i:1} = w ]] && ma[w]=$(getworkspace)
-      op+=("${ma[${ret:$i:1}]}")
+  ((__o[synk])) && {
+    # unset _json will force getworkspace()
+    # to get a fresh tree if 'w' is in --print
+    unset _json
+    while [[ -z "${_op[*]}" ]]; do
+      i3-msg -qt subscribe '["window","tick"]'
+      match "$(i3-msg -t get_tree)"
     done
-    
   }
 
-  ((__o[synk])) \
-    && while read -r line < <(i3-msg -mt subscribe '["window"]'); do
+  [[ -n ${_op[*]} ]] && {
+    printf '%s\n' "${_op[@]}"
+    exit
+  }
 
-      [[ $line =~ ${_re//$'\n'/} ]] && {
-
-        declare -A ma
-        ma=(
-          [n]="${BASH_REMATCH[1]}"
-          [m]="${BASH_REMATCH[2]}"
-          [m]="${BASH_REMATCH[3]}"
-          [a]="${BASH_REMATCH[4]}"
-          [o]="${BASH_REMATCH[5]}"
-          [d]="${BASH_REMATCH[6]}"
-          [c]="${BASH_REMATCH[7]}"
-          [i]="${BASH_REMATCH[8]}"
-          [t]="${BASH_REMATCH[9]}"
-          [e]="${BASH_REMATCH[10]}"
-          [s]="${BASH_REMATCH[11]}"
-          [f]="${BASH_REMATCH[12]}"
-        )
-
-        for ((i=0;i<${#ret};i++)); do
-          [[ ${ret:$i:1} = w ]] && ma[w]=$(getworkspace)
-          op+=("${ma[${ret:$i:1}]}")
-        done
-
-        break
-      }
-    done
-
-  # ((__o[synk])) && {
-  #   # timeout after 10 seconds
-  #   for ((i=0;i<100;i++)); do 
-  #     sleep 0.1
-  #     result=$(getwindow)
-  #     [ -n "$result" ] && break
-  #   done
-  # }
-
-  if [ -n "${op[*]}" ]; then
-    printf '%s\n' "${op[@]}"
-  else
-    ERX "no matching window."
-  fi
-  
+  ERX "no matching window."
 }
 
 ___printhelp(){
@@ -109,7 +46,7 @@ i3get - prints info about a specific window to stdout
 
 SYNOPSIS
 --------
-i3get [--class|-c CLASS] [--instance|-i INSTANCE] [--title|-t TITLE] [--conid|-n CON_ID] [--winid|-d WIN_ID] [--mark|-m MARK] [--titleformat|-o TITLE_FORMAT] [--active|-a] [--synk|-y] [--print|-r OUTPUT]      
+i3get [--class|-c CLASS] [--instance|-i INSTANCE] [--title|-t TITLE] [--conid|-n CON_ID] [--winid|-d WIN_ID] [--mark|-m MARK] [--titleformat|-o TITLE_FORMAT] [--active|-a] [--synk|-y] [--print|-r OUTPUT] [--json TREE]      
 i3get --help|-h
 i3get --version|-v
 
@@ -159,19 +96,25 @@ OUTPUT can be one or more of the following
 characters:  
 
 
-|character | print
-|:---------|:-----
-|t       | title  
-|c       | class  
-|i       | instance  
-|d       | Window ID  
-|n       | Con_Id (default)  
-|m       | mark  
-|w       | workspace  
-|a       | is active  
-|f       | floating state  
-|o       | title format  
-|v       | visible state  
+|character | print            | return
+|:---------|:-----------------|:------
+|t       | title            | string
+|c       | class            | string
+|i       | instance         | string
+|d       | Window ID        | INT
+|n       | Con_Id (default) | INT
+|m       | mark             | JSON list
+|w       | workspace        | INT
+|a       | is active        | true|false
+|f       | floating state   | string
+|o       | title format     | string
+|e       | fullscreen       | 1|0
+|s       | sticky           | true|false
+
+--json TREE  
+Use TREE instead of the output of i3-msg -t
+get_tree
+
 
 --help|-h  
 Show help and exit.
@@ -191,22 +134,51 @@ ERX(){ >&2 echo "[ERROR]" "$*" && exit 1 ; }
 getworkspace() {
   local re
 
+  [[ -z $_json ]] && {
+    [[ -f ${__o[json]} ]] && _json=$(< "${__o[json]}")
+    : "${_json:=$(i3-msg -t get_tree)}"
+  }
+
   special=@
   re="\"num$special\":(${_c[workspace]:-"[0-9-]+"}),[^$special]+"
-  re+="$_re"
+  re+="$_expression"
 
-  [[ ${_json//\"num\":/\"num@\":} =~ ${re//$'\n'/} ]] \
+  [[ ${_json//\"num\":/\"num@\":} =~ $re ]] \
     && echo "${BASH_REMATCH[1]}"
 }
 makeexpression() {
 
-local mark
+local mark o re crit
+
+declare -A _c
+
+for o in "${!__o[@]}"; do
+  [[ $o =~ synk|active|print ]] && continue
+
+  crit=${__o[$o]}
+
+  # allow ^ and $ re in criteria
+  if [[ $crit =~ [$]$ ]]; then
+    crit='[^"]*'"${crit%$}"
+  elif [[ $crit =~ ^[^] ]]; then
+    crit=${crit%$}'[^"]*'
+  elif [[ $crit =~ ^[^](.+)[$]$ ]]; then
+    crit=${BASH_REMATCH[1]}
+  fi
+
+  _c[$o]=$crit
+done
+
+# no criteria specified, search active window
+((__o[active] || !${#_c[@]})) && _c[active]=true
+: "${_c[active]:=true|false}"
+
 mark='("marks":(\[[^]]*\]),)?'
 [[ -n ${_c[mark]} ]] \
   && mark="(\"marks\":(\[[^]]*\"${_c[mark]}\"[^]]*\]),)"
 
-cat << EOB
-"id":(${_c[conid]:-"[0-9]+"}),
+re=$(cat << EOB
+"id":(${_c[conid]:-[0-9]+}),
 [^{]+
 ${mark}
 "focused":(${_c[active]}),
@@ -214,24 +186,130 @@ ${mark}
 [^}]+},
 [^}]+},
 [^}]+},
+"name":"(${_c[title]:-[^\"]+})",
+("title_format":"(${_c[format]:-[^\"]+})",)?
+"window":(${_c[winid]:-[0-9]+}),
 [^,]+,
-"title_format":"(${_c[format]:-"[^\"]+"})",
-"window":(${_c[winid]:-"[0-9]+"}),
-[^,]+,
-"window_properties":\{"class":"(${_c[class]:-"[^\"]+"})",
-"instance":"(${_c[instance]:-"[^\"]+"})",
-"title":"(${_c[title]:-"[^\"]+"})",
-"transient_for":[^,]+,
-[^{}]+,
+"window_properties":\{
+"class":"(${_c[class]:-[^\"]+})",
+"instance":"(${_c[instance]:-[^\"]+})",
+[^}]+\},
+"nodes":[^,]+,
+"floating_nodes":[^,]+,
+"focus":[^,]+,
 "fullscreen_mode":([0-9]),
 "sticky":(false|true),
 "floating":"([^\"]+)",
 EOB
+)
+
+_expression="${re//$'\n'/}"
+}
+
+# example node, this is formated with 'jq' the
+# output we parse have NO WHITESPACE other then
+# within strings.
+# 
+# "title_format" and "marks" entries are only present
+# if they contain a value
+
+# {
+#   "id": 94203249782944,
+#   "type": "con",
+#   "orientation": "none",
+#   "scratchpad_state": "none",
+#   "percent": 0.25,
+#   "urgent": false,
+#   "focused": false,
+#   "output": "HDMI2",
+#   "layout": "splith",
+#   "workspace_layout": "default",
+#   "last_split_layout": "splith",
+#   "border": "normal",
+#   "current_border_width": 2,
+#   "rect": {
+#     "x": 1614,
+#     "y": 272,
+#     "width": 306,
+#     "height": 808
+#   },
+#   "deco_rect": {
+#     "x": 0,
+#     "y": 0,
+#     "width": 76,
+#     "height": 20
+#   },
+#   "window_rect": {
+#     "x": 2,
+#     "y": 0,
+#     "width": 304,
+#     "height": 808
+#   },
+#   "geometry": {
+#     "x": 0,
+#     "y": 0,
+#     "width": 1920,
+#     "height": 808
+#   },
+#   "name": "/home/bud/snd/y - File Manager",
+#   "title_format": "snd/y",
+#   "window": 14680068,
+#   "window_type": "normal",
+#   "window_properties": {
+#     "class": "ThunarD",
+#     "instance": "thunar-ltd",
+#     "window_role": "Thunar-1593373798-3562220418",
+#     "title": "/home/bud/snd/y - File Manager",
+#     "transient_for": null
+#   },
+#   "nodes": [],
+#   "floating_nodes": [],
+#   "focus": [],
+#   "fullscreen_mode": 0,
+#   "sticky": false,
+#   "floating": "user_off",
+#   "swallows": []
+# },
+
+match() {
+
+  local json=$1 ret=${__o[print]:-n} k
+
+  [[ -z $_expression ]] && makeexpression
+
+  declare -i i
+  declare -A ma
+
+  [[ $json =~ $_expression ]] && {
+  
+    ma=(
+      [n]="${BASH_REMATCH[1]}"
+      [m]="${BASH_REMATCH[2]}" # mark opt
+      [m]="${BASH_REMATCH[3]}"
+      [a]="${BASH_REMATCH[4]}"
+      [t]="${BASH_REMATCH[5]}"
+      [o]="${BASH_REMATCH[6]}" # titleformat opt
+      [o]="${BASH_REMATCH[7]}"
+      [d]="${BASH_REMATCH[8]}"
+      [c]="${BASH_REMATCH[9]}"
+      [i]="${BASH_REMATCH[10]}"
+      [e]="${BASH_REMATCH[11]}"
+      [s]="${BASH_REMATCH[12]}"
+      [f]="${BASH_REMATCH[13]}"
+    )
+
+    for ((i=0;i<${#ret};i++)); do
+      k=${ret:$i:1}
+      [[ $k = w ]] && ma[w]=$(getworkspace)
+      [[ -n ${ma[$k]} ]] && _op+=("${ma[$k]}")
+    done
+
+  }
 }
 declare -A __o
 eval set -- "$(getopt --name "i3get" \
   --options "c:i:t:n:d:m:o:ayr:hv" \
-  --longoptions "class:,instance:,title:,conid:,winid:,mark:,titleformat:,active,synk,print:,help,version," \
+  --longoptions "class:,instance:,title:,conid:,winid:,mark:,titleformat:,active,synk,print:,json:,help,version," \
   -- "$@"
 )"
 
@@ -247,6 +325,7 @@ while true; do
     --active     | -a ) __o[active]=1 ;; 
     --synk       | -y ) __o[synk]=1 ;; 
     --print      | -r ) __o[print]="${2:-}" ; shift ;;
+    --json       ) __o[json]="${2:-}" ; shift ;;
     --help       | -h ) __o[help]=1 ;; 
     --version    | -v ) __o[version]=1 ;; 
     -- ) shift ; break ;;

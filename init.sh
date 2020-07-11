@@ -3,8 +3,8 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-i3get - version: 0.416
-updated: 2020-07-10 by budRich
+i3get - version: 0.571
+updated: 2020-07-11 by budRich
 EOB
 }
 
@@ -18,7 +18,7 @@ i3get - prints info about a specific window to stdout
 
 SYNOPSIS
 --------
-i3get [--class|-c CLASS] [--instance|-i INSTANCE] [--title|-t TITLE] [--conid|-n CON_ID] [--winid|-d WIN_ID] [--mark|-m MARK] [--titleformat|-o TITLE_FORMAT] [--active|-a] [--synk|-y] [--print|-r OUTPUT]      
+i3get [--class|-c CLASS] [--instance|-i INSTANCE] [--title|-t TITLE] [--conid|-n CON_ID] [--winid|-d WIN_ID] [--mark|-m MARK] [--titleformat|-o TITLE_FORMAT] [--active|-a] [--synk|-y] [--print|-r OUTPUT] [--json TREE]      
 i3get --help|-h
 i3get --version|-v
 
@@ -68,19 +68,25 @@ OUTPUT can be one or more of the following
 characters:  
 
 
-|character | print
-|:---------|:-----
-|t       | title  
-|c       | class  
-|i       | instance  
-|d       | Window ID  
-|n       | Con_Id (default)  
-|m       | mark  
-|w       | workspace  
-|a       | is active  
-|f       | floating state  
-|o       | title format  
-|v       | visible state  
+|character | print            | return
+|:---------|:-----------------|:------
+|t       | title            | string
+|c       | class            | string
+|i       | instance         | string
+|d       | Window ID        | INT
+|n       | Con_Id (default) | INT
+|m       | mark             | JSON list
+|w       | workspace        | INT
+|a       | is active        | true|false
+|f       | floating state   | string
+|o       | title format     | string
+|e       | fullscreen       | 1|0
+|s       | sticky           | true|false
+
+--json TREE  
+Use TREE instead of the output of i3-msg -t
+get_tree
+
 
 --help|-h  
 Show help and exit.
@@ -100,7 +106,7 @@ done
 declare -A __o
 eval set -- "$(getopt --name "i3get" \
   --options "c:i:t:n:d:m:o:ayr:hv" \
-  --longoptions "class:,instance:,title:,conid:,winid:,mark:,titleformat:,active,synk,print:,help,version," \
+  --longoptions "class:,instance:,title:,conid:,winid:,mark:,titleformat:,active,synk,print:,json:,help,version," \
   -- "$@"
 )"
 
@@ -116,6 +122,7 @@ while true; do
     --active     | -a ) __o[active]=1 ;; 
     --synk       | -y ) __o[synk]=1 ;; 
     --print      | -r ) __o[print]="${2:-}" ; shift ;;
+    --json       ) __o[json]="${2:-}" ; shift ;;
     --help       | -h ) __o[help]=1 ;; 
     --version    | -v ) __o[version]=1 ;; 
     -- ) shift ; break ;;

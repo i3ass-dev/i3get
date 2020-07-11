@@ -3,7 +3,7 @@
 SYNOPSIS
 --------
 ```text
-i3get [--class|-c CLASS] [--instance|-i INSTANCE] [--title|-t TITLE] [--conid|-n CON_ID] [--winid|-d WIN_ID] [--mark|-m MARK] [--titleformat|-o TITLE_FORMAT] [--active|-a] [--synk|-y] [--print|-r OUTPUT]      
+i3get [--class|-c CLASS] [--instance|-i INSTANCE] [--title|-t TITLE] [--conid|-n CON_ID] [--winid|-d WIN_ID] [--mark|-m MARK] [--titleformat|-o TITLE_FORMAT] [--active|-a] [--synk|-y] [--print|-r OUTPUT] [--json TREE]      
 i3get --help|-h
 i3get --version|-v
 ```
@@ -54,19 +54,24 @@ after 10 seconds*).
 characters:  
 
 
-|character | print
-|:---------|:-----
-|`t`       | title  
-|`c`       | class  
-|`i`       | instance  
-|`d`       | Window ID  
-|`n`       | Con_Id (default)  
-|`m`       | mark  
-|`w`       | workspace  
-|`a`       | is active  
-|`f`       | floating state  
-|`o`       | title format  
-|`v`       | visible state  
+|character | print            | return
+|:---------|:-----------------|:------
+|`t`       | title            | string
+|`c`       | class            | string
+|`i`       | instance         | string
+|`d`       | Window ID        | INT
+|`n`       | Con_Id (default) | INT
+|`m`       | mark             | JSON list
+|`w`       | workspace        | INT
+|`a`       | is active        | true|false
+|`f`       | floating state   | string
+|`o`       | title format     | string
+|`e`       | fullscreen       | 1|0
+|`s`       | sticky           | true|false
+
+`--json` TREE  
+Use TREE instead of the output of `i3-msg -t
+get_tree`
 
 `--help`|`-h`  
 Show help and exit.

@@ -2,7 +2,7 @@
 description: >
   prints info about a specific window to stdout
 updated:       2020-07-12
-version:       0.624
+version:       0.626
 author:        budRich
 repo:          https://github.com/budlabs/i3ass
 created:       2017-03-08

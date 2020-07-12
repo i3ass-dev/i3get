@@ -1,3 +1,5 @@
+#!/bin/bash
+
 makeexpression() {
 
 local mark o re crit format

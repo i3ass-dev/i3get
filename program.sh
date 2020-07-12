@@ -3,7 +3,7 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-i3get - version: 0.624
+i3get - version: 0.626
 updated: 2020-07-12 by budRich
 EOB
 }
@@ -139,6 +139,7 @@ trap '[ "$?" -ne 77 ] || exit 77' ERR
 ERX() { echo  "[ERROR] $*" >&2 ; exit 77 ;}
 ERR() { echo  "[WARNING] $*" >&2 ;}
 ERM() { echo  "$*" >&2 ;}
+
 makeexpression() {
 
 local mark o re crit format

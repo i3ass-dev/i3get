@@ -3,8 +3,8 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-i3get - version: 0.571
-updated: 2020-07-11 by budRich
+i3get - version: 0.616
+updated: 2020-07-12 by budRich
 EOB
 }
 
@@ -12,20 +12,25 @@ EOB
 
 main(){
 
-  declare -a _op      # output, populated in match()
-  declare _expression # makeexpression() via match()
+  declare -a _op         # output, populated in match()
+  declare -r _special= # used when searching for ws
+  declare -g _expression # makeexpression() via match()
+  declare -i timeout
 
   [[ -f ${__o[json]} ]] && _json=$(< "${__o[json]}")
   : "${_json:=$(i3-msg -t get_tree)}"
 
   match "$_json"
 
-  ((__o[synk])) && {
-    # unset _json will force getworkspace()
-    # to get a fresh tree if 'w' is in --print
-    unset _json
+  ((__o[synk])) && [[ -z "${_op[*]}" ]] && {
+
+    timeout=$SECONDS
+
+    match "$(i3-msg -t get_tree)"
+
     while [[ -z "${_op[*]}" ]]; do
-      i3-msg -qt subscribe '["window","tick"]'
+      ((SECONDS-timeout > 60)) && break
+      i3-msg -qt subscribe '["window"]'
       match "$(i3-msg -t get_tree)"
     done
   }
@@ -88,7 +93,7 @@ Currently active window (default)
 --synk|-y  
 Synch on. If this option is included,  script
 will wait till target window exist. (or timeout
-after 10 seconds).
+after 60 seconds).
 
 
 --print|-r OUTPUT  
@@ -98,22 +103,23 @@ characters:
 
 |character | print            | return
 |:---------|:-----------------|:------
-|t       | title            | string
-|c       | class            | string
-|i       | instance         | string
-|d       | Window ID        | INT
-|n       | Con_Id (default) | INT
-|m       | mark             | JSON list
-|w       | workspace        | INT
-|a       | is active        | true|false
-|f       | floating state   | string
-|o       | title format     | string
-|e       | fullscreen       | 1|0
-|s       | sticky           | true|false
+|t         | title            | string
+|c         | class            | string
+|i         | instance         | string
+|d         | Window ID        | INT
+|n         | Con_Id (default) | INT
+|m         | mark             | JSON list
+|w         | workspace        | INT
+|a         | is active        | true|false
+|f         | floating state   | string
+|o         | title format     | string
+|e         | fullscreen       | 1|0
+|s         | sticky           | true|false
+|u         | urgent           | true|false
 
 --json TREE  
-Use TREE instead of the output of i3-msg -t
-get_tree
+Use TREE instead of the output of  
+i3-msg -t get_tree
 
 
 --help|-h  
@@ -127,28 +133,15 @@ EOB
 }
 
 
-ERM(){ >&2 echo "$*"; }
-ERR(){ >&2 echo "[WARNING]" "$*"; }
-ERX(){ >&2 echo "[ERROR]" "$*" && exit 1 ; }
+set -E
+trap '[ "$?" -ne 77 ] || exit 77' ERR
 
-getworkspace() {
-  local re
-
-  [[ -z $_json ]] && {
-    [[ -f ${__o[json]} ]] && _json=$(< "${__o[json]}")
-    : "${_json:=$(i3-msg -t get_tree)}"
-  }
-
-  special=@
-  re="\"num$special\":(${_c[workspace]:-"[0-9-]+"}),[^$special]+"
-  re+="$_expression"
-
-  [[ ${_json//\"num\":/\"num@\":} =~ $re ]] \
-    && echo "${BASH_REMATCH[1]}"
-}
+ERX() { echo  "[ERROR] $*" >&2 ; exit 77 ;}
+ERR() { echo  "[WARNING] $*" >&2 ;}
+ERM() { echo  "$*" >&2 ;}
 makeexpression() {
 
-local mark o re crit
+local mark o re crit format
 
 declare -A _c
 
@@ -161,7 +154,7 @@ for o in "${!__o[@]}"; do
   if [[ $crit =~ [$]$ ]]; then
     crit='[^"]*'"${crit%$}"
   elif [[ $crit =~ ^[^] ]]; then
-    crit=${crit%$}'[^"]*'
+    crit=${crit#^}'[^"]*'
   elif [[ $crit =~ ^[^](.+)[$]$ ]]; then
     crit=${BASH_REMATCH[1]}
   fi
@@ -174,21 +167,43 @@ done
 : "${_c[active]:=true|false}"
 
 mark='("marks":(\[[^]]*\]),)?'
+format='("title_format":"([^"]+)",)?'
+
+[[ -n ${_c[titleformat]} ]] \
+  && format="(\"title_format\":(\"${_c[titleformat]}\"),)"
+
 [[ -n ${_c[mark]} ]] \
   && mark="(\"marks\":(\[[^]]*\"${_c[mark]}\"[^]]*\]),)"
 
-re=$(cat << EOB
+if [[ ${__o[print]} =~ w || -n ${_c[workspace]} ]]; then
+  re="\"num$_special\":(${_c[workspace]:-[0-9-]+})"
+  re+=",[^$_special]+"
+else
+  re="(\{)"
+fi
+
+re+=$(cat << EOB
 "id":(${_c[conid]:-[0-9]+}),
-[^{]+
+"type":"[^"]+",
+"orientation":"[^"]+",
+"scratchpad_state":"[^"]+",
+"percent":[0-9.]+,
+"urgent":(false|true),
 ${mark}
 "focused":(${_c[active]}),
-[^}]+},
-[^}]+},
-[^}]+},
-[^}]+},
-"name":"(${_c[title]:-[^\"]+})",
-("title_format":"(${_c[format]:-[^\"]+})",)?
-"window":(${_c[winid]:-[0-9]+}),
+"output":"[^"]+",
+"layout":"[^"]+",
+"workspace_layout":"[^"]+",
+"last_split_layout":"[^"]+",
+"border":"[^"]+",
+"current_border_width":[0-9-]+,
+"rect":[^}]+},
+"deco_rect":[^}]+},
+"window_rect":[^}]+},
+"geometry":[^}]+},
+"name":"?(${_c[title]:-[^\"]+})"?,
+${format}
+("window":(${_c[winid]:-[0-9]+}),
 [^,]+,
 "window_properties":\{
 "class":"(${_c[class]:-[^\"]+})",
@@ -199,10 +214,15 @@ ${mark}
 "focus":[^,]+,
 "fullscreen_mode":([0-9]),
 "sticky":(false|true),
-"floating":"([^\"]+)",
+"floating":"([^"]+)",)
 EOB
 )
 
+# if criteria is mark || conid, window properties
+# are optional
+[[ -n ${_c[mark]}${_c[conid]}${_c[titleformat]} ]] && re+='?'
+
+# ERM "$re"
 _expression="${re//$'\n'/}"
 }
 
@@ -214,52 +234,51 @@ _expression="${re//$'\n'/}"
 # if they contain a value
 
 # {
-#   "id": 94203249782944,
+#   "id": 94203263545520,
 #   "type": "con",
 #   "orientation": "none",
 #   "scratchpad_state": "none",
-#   "percent": 0.25,
+#   "percent": 1,
 #   "urgent": false,
 #   "focused": false,
-#   "output": "HDMI2",
+#   "output": "__i3",
 #   "layout": "splith",
 #   "workspace_layout": "default",
 #   "last_split_layout": "splith",
 #   "border": "normal",
 #   "current_border_width": 2,
 #   "rect": {
-#     "x": 1614,
-#     "y": 272,
-#     "width": 306,
-#     "height": 808
+#     "x": 596,
+#     "y": 355,
+#     "width": 728,
+#     "height": 350
 #   },
 #   "deco_rect": {
 #     "x": 0,
 #     "y": 0,
-#     "width": 76,
+#     "width": 728,
 #     "height": 20
 #   },
 #   "window_rect": {
 #     "x": 2,
 #     "y": 0,
-#     "width": 304,
-#     "height": 808
+#     "width": 724,
+#     "height": 348
 #   },
 #   "geometry": {
 #     "x": 0,
 #     "y": 0,
-#     "width": 1920,
-#     "height": 808
+#     "width": 724,
+#     "height": 348
 #   },
-#   "name": "/home/bud/snd/y - File Manager",
-#   "title_format": "snd/y",
-#   "window": 14680068,
-#   "window_type": "normal",
+#   "name": "/dev/pts/12",
+#   "title_format": "typiskt",
+#   "window": 8393677,
+#   "window_type": "unknown",
 #   "window_properties": {
-#     "class": "ThunarD",
-#     "instance": "thunar-ltd",
-#     "window_role": "Thunar-1593373798-3562220418",
-#     "title": "/home/bud/snd/y - File Manager",
+#     "class": "URxvt",
+#     "instance": "typiskt",
+#     "title": "/dev/pts/12",
 #     "transient_for": null
 #   },
 #   "nodes": [],
@@ -267,9 +286,19 @@ _expression="${re//$'\n'/}"
 #   "focus": [],
 #   "fullscreen_mode": 0,
 #   "sticky": false,
-#   "floating": "user_off",
+#   "floating": "user_on",
 #   "swallows": []
-# },
+# }
+# ],
+# "floating_nodes": [],
+# "focus": [
+# 94203263545520
+# ],
+# "fullscreen_mode": 0,
+# "sticky": false,
+# "floating": "auto_off",
+# "swallows": []
+# }
 
 match() {
 
@@ -280,38 +309,48 @@ match() {
   declare -i i
   declare -A ma
 
+  [[ ${__o[print]} =~ w ]] \
+    && json=${_json//\"num\":/\"num${_special}\":}
+
   [[ $json =~ $_expression ]] && {
-  
     ma=(
-      [n]="${BASH_REMATCH[1]}"
-      [m]="${BASH_REMATCH[2]}" # mark opt
-      [m]="${BASH_REMATCH[3]}"
-      [a]="${BASH_REMATCH[4]}"
-      [t]="${BASH_REMATCH[5]}"
-      [o]="${BASH_REMATCH[6]}" # titleformat opt
-      [o]="${BASH_REMATCH[7]}"
-      [d]="${BASH_REMATCH[8]}"
-      [c]="${BASH_REMATCH[9]}"
-      [i]="${BASH_REMATCH[10]}"
-      [e]="${BASH_REMATCH[11]}"
-      [s]="${BASH_REMATCH[12]}"
-      [f]="${BASH_REMATCH[13]}"
+      [w]="${BASH_REMATCH[$((++i))]}"
+      [n]="${BASH_REMATCH[$((++i))]}"
+      [u]="${BASH_REMATCH[$((++i))]}"
+      [O]="${BASH_REMATCH[$((++i))]}" # mark opt
+      [m]="${BASH_REMATCH[$((++i))]}"
+      [a]="${BASH_REMATCH[$((++i))]}"
+      [t]="${BASH_REMATCH[$((++i))]}"
+      [O]="${BASH_REMATCH[$((++i))]}" # titleformat opt
+      [o]="${BASH_REMATCH[$((++i))]}"
+      [O]="${BASH_REMATCH[$((++i))]}" # window opt (mark|conid)
+      [d]="${BASH_REMATCH[$((++i))]}"
+      [c]="${BASH_REMATCH[$((++i))]}"
+      [i]="${BASH_REMATCH[$((++i))]}"
+      [e]="${BASH_REMATCH[$((++i))]}"
+      [s]="${BASH_REMATCH[$((++i))]}"
+      [f]="${BASH_REMATCH[$((++i))]}"
     )
 
     for ((i=0;i<${#ret};i++)); do
       k=${ret:$i:1}
-      [[ $k = w ]] && ma[w]=$(getworkspace)
-      [[ -n ${ma[$k]} ]] && _op+=("${ma[$k]}")
+      _op+=("${ma[$k]:-$k: NA}")
     done
 
   }
 }
+
+
 declare -A __o
-eval set -- "$(getopt --name "i3get" \
-  --options "c:i:t:n:d:m:o:ayr:hv" \
-  --longoptions "class:,instance:,title:,conid:,winid:,mark:,titleformat:,active,synk,print:,json:,help,version," \
-  -- "$@"
+options="$(
+  getopt --name "[ERROR]:i3get" \
+    --options "c:i:t:n:d:m:o:ayr:hv" \
+    --longoptions "class:,instance:,title:,conid:,winid:,mark:,titleformat:,active,synk,print:,json:,help,version," \
+    -- "$@" || exit 77
 )"
+
+eval set -- "$options"
+unset options
 
 while true; do
   case "$1" in
@@ -326,26 +365,18 @@ while true; do
     --synk       | -y ) __o[synk]=1 ;; 
     --print      | -r ) __o[print]="${2:-}" ; shift ;;
     --json       ) __o[json]="${2:-}" ; shift ;;
-    --help       | -h ) __o[help]=1 ;; 
-    --version    | -v ) __o[version]=1 ;; 
+    --help       | -h ) ___printhelp && exit ;;
+    --version    | -v ) ___printversion && exit ;;
     -- ) shift ; break ;;
     *  ) break ;;
   esac
   shift
 done
 
-if [[ ${__o[help]:-} = 1 ]]; then
-  ___printhelp
-  exit
-elif [[ ${__o[version]:-} = 1 ]]; then
-  ___printversion
-  exit
-fi
-
 [[ ${__lastarg:="${!#:-}"} =~ ^--$|${0}$ ]] \
   && __lastarg="" 
 
 
-main "${@:-}"
+main "${@}"
 
 

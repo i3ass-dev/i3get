@@ -1,5 +1,5 @@
 .nh
-.TH I3GET 1 2020\-07\-11 Linux "User Manuals"
+.TH I3GET 1 2020\-07\-12 Linux "User Manuals"
 .SH NAME
 .PP
 \fB\fCi3get\fR \- prints info about a specific window to
@@ -71,7 +71,7 @@ Currently active window (default)
 .br
 Synch on. If this option is included,  script
 will wait till target window exist. (\fIor timeout
-after 10 seconds\fP).
+after 60 seconds\fP).
 
 .PP
 \fB\fC\-\-print\fR|\fB\fC\-r\fR OUTPUT
@@ -96,13 +96,15 @@ l l l .
 \fB\fCo\fR	title format	string
 \fB\fCe\fR	fullscreen	1
 \fB\fCs\fR	sticky	true
+\fB\fCu\fR	urgent	true
 .TE
 
 .PP
 \fB\fC\-\-json\fR TREE
 .br
-Use TREE instead of the output of \fB\fCi3\-msg \-t
-get\_tree\fR
+Use TREE instead of the output of
+.br
+\fB\fCi3\-msg \-t get\_tree\fR
 
 .PP
 \fB\fC\-\-help\fR|\fB\fC\-h\fR

@@ -2,20 +2,25 @@
 
 main(){
 
-  declare -a _op      # output, populated in match()
-  declare _expression # makeexpression() via match()
+  declare -a _op         # output, populated in match()
+  declare -r _special= # used when searching for ws
+  declare -g _expression # makeexpression() via match()
+  declare -i timeout
 
   [[ -f ${__o[json]} ]] && _json=$(< "${__o[json]}")
   : "${_json:=$(i3-msg -t get_tree)}"
 
   match "$_json"
 
-  ((__o[synk])) && {
-    # unset _json will force getworkspace()
-    # to get a fresh tree if 'w' is in --print
-    unset _json
+  ((__o[synk])) && [[ -z "${_op[*]}" ]] && {
+
+    timeout=$SECONDS
+
+    match "$(i3-msg -t get_tree)"
+
     while [[ -z "${_op[*]}" ]]; do
-      i3-msg -qt subscribe '["window","tick"]'
+      ((SECONDS-timeout > 60)) && break
+      i3-msg -qt subscribe '["window"]'
       match "$(i3-msg -t get_tree)"
     done
   }

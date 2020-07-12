@@ -29,11 +29,12 @@ Search for windows with the given mark
 Search for windows with the given titleformat
 
 # options-json-description
-Use TREE instead of the output of `i3-msg -t get_tree`
+Use TREE instead of the output of  
+`i3-msg -t get_tree`
 
 # options-synk-description
 Synch on. If this option is included, 
-script will wait till target window exist. (*or timeout after 10 seconds*).
+script will wait till target window exist. (*or timeout after 60 seconds*).
 
 # options-print-description
 *OUTPUT* can be one or more of the following 
@@ -41,15 +42,16 @@ characters:
 
 |character | print            | return
 |:---------|:-----------------|:------
-|`t`       | title            | string
-|`c`       | class            | string
-|`i`       | instance         | string
-|`d`       | Window ID        | INT
-|`n`       | Con_Id (default) | INT
-|`m`       | mark             | JSON list
-|`w`       | workspace        | INT
-|`a`       | is active        | true|false
-|`f`       | floating state   | string
-|`o`       | title format     | string
-|`e`       | fullscreen       | 1|0
-|`s`       | sticky           | true|false
+|`t`         | title            | string
+|`c`         | class            | string
+|`i`         | instance         | string
+|`d`         | Window ID        | INT
+|`n`         | Con_Id (default) | INT
+|`m`         | mark             | JSON list
+|`w`         | workspace        | INT
+|`a`         | is active        | true|false
+|`f`         | floating state   | string
+|`o`         | title format     | string
+|`e`         | fullscreen       | 1|0
+|`s`         | sticky           | true|false
+|`u`         | urgent           | true|false

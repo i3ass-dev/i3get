@@ -9,28 +9,32 @@ match() {
   declare -i i
   declare -A ma
 
+  [[ ${__o[print]} =~ w ]] \
+    && json=${_json//\"num\":/\"num${_special}\":}
+
   [[ $json =~ $_expression ]] && {
-  
     ma=(
-      [n]="${BASH_REMATCH[1]}"
-      [m]="${BASH_REMATCH[2]}" # mark opt
-      [m]="${BASH_REMATCH[3]}"
-      [a]="${BASH_REMATCH[4]}"
-      [t]="${BASH_REMATCH[5]}"
-      [o]="${BASH_REMATCH[6]}" # titleformat opt
-      [o]="${BASH_REMATCH[7]}"
-      [d]="${BASH_REMATCH[8]}"
-      [c]="${BASH_REMATCH[9]}"
-      [i]="${BASH_REMATCH[10]}"
-      [e]="${BASH_REMATCH[11]}"
-      [s]="${BASH_REMATCH[12]}"
-      [f]="${BASH_REMATCH[13]}"
+      [w]="${BASH_REMATCH[$((++i))]}"
+      [n]="${BASH_REMATCH[$((++i))]}"
+      [u]="${BASH_REMATCH[$((++i))]}"
+      [O]="${BASH_REMATCH[$((++i))]}" # mark opt
+      [m]="${BASH_REMATCH[$((++i))]}"
+      [a]="${BASH_REMATCH[$((++i))]}"
+      [t]="${BASH_REMATCH[$((++i))]}"
+      [O]="${BASH_REMATCH[$((++i))]}" # titleformat opt
+      [o]="${BASH_REMATCH[$((++i))]}"
+      [O]="${BASH_REMATCH[$((++i))]}" # window opt (mark|conid)
+      [d]="${BASH_REMATCH[$((++i))]}"
+      [c]="${BASH_REMATCH[$((++i))]}"
+      [i]="${BASH_REMATCH[$((++i))]}"
+      [e]="${BASH_REMATCH[$((++i))]}"
+      [s]="${BASH_REMATCH[$((++i))]}"
+      [f]="${BASH_REMATCH[$((++i))]}"
     )
 
     for ((i=0;i<${#ret};i++)); do
       k=${ret:$i:1}
-      [[ $k = w ]] && ma[w]=$(getworkspace)
-      [[ -n ${ma[$k]} ]] && _op+=("${ma[$k]}")
+      _op+=("${ma[$k]:-$k: NA}")
     done
 
   }

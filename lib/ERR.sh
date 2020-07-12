@@ -1,5 +1,8 @@
 #!/bin/env bash
 
-ERM(){ >&2 echo "$*"; }
-ERR(){ >&2 echo "[WARNING]" "$*"; }
-ERX(){ >&2 echo "[ERROR]" "$*" && exit 1 ; }
+set -E
+trap '[ "$?" -ne 77 ] || exit 77' ERR
+
+ERX() { echo  "[ERROR] $*" >&2 ; exit 77 ;}
+ERR() { echo  "[WARNING] $*" >&2 ;}
+ERM() { echo  "$*" >&2 ;}

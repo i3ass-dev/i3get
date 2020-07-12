@@ -1,15 +1,23 @@
-awk version:
-time(while ((++i<100));do i3get -i typiskt -r tcidamo >/dev/null ; done)
+20/07/12
+========
 
-real  0m3.848s
-user  0m3.379s
-sys   0m0.736s
+time(while ((++i<100));do i3get -i typiskt -r tcidamow  >/dev/null ; done)
+real  0m3.260s
 
-wc -l program.sh 
-331 program.sh
+time(while ((++i<100));do i3get -i typiskt -r tcidamo  >/dev/null ; done)
+real  0m2.379s
 
+time(while ((++i<100));do i3get -i typiskt -r tcidamo --json test.json >/dev/null ; done)
+real  0m1.865s
 
-----
+time(while ((++i<100));do i3get -i typiskt -r tcidamow --json test.json >/dev/null ; done)
+real  0m2.737s
+
+cat main.sh lib/* | grep -E '^\s*[^#].+$' | wc -l
+126
+
+---
+
 
 time(while ((++i<100));do i3get -i typiskt -r tcidamo >/dev/null ; done)
 real  0m2.370s
@@ -33,5 +41,17 @@ real  0m4.176s
 user  0m3.299s
 sys   0m0.815s
 
-cat main.sh lib/* | grep -E '^\s*[^#].+$' | wc -l
-112
+---
+
+awk version:
+time(while ((++i<100));do i3get -i typiskt -r tcidamo >/dev/null ; done)
+
+real  0m3.848s
+user  0m3.379s
+sys   0m0.736s
+
+wc -l program.sh 
+331 program.sh
+
+
+----

@@ -3,10 +3,11 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-i3get - version: 0.571
-updated: 2020-07-11 by budRich
+i3get - version: 0.616
+updated: 2020-07-12 by budRich
 EOB
 }
+
 
 
 
@@ -60,7 +61,7 @@ Currently active window (default)
 --synk|-y  
 Synch on. If this option is included,  script
 will wait till target window exist. (or timeout
-after 10 seconds).
+after 60 seconds).
 
 
 --print|-r OUTPUT  
@@ -70,22 +71,23 @@ characters:
 
 |character | print            | return
 |:---------|:-----------------|:------
-|t       | title            | string
-|c       | class            | string
-|i       | instance         | string
-|d       | Window ID        | INT
-|n       | Con_Id (default) | INT
-|m       | mark             | JSON list
-|w       | workspace        | INT
-|a       | is active        | true|false
-|f       | floating state   | string
-|o       | title format     | string
-|e       | fullscreen       | 1|0
-|s       | sticky           | true|false
+|t         | title            | string
+|c         | class            | string
+|i         | instance         | string
+|d         | Window ID        | INT
+|n         | Con_Id (default) | INT
+|m         | mark             | JSON list
+|w         | workspace        | INT
+|a         | is active        | true|false
+|f         | floating state   | string
+|o         | title format     | string
+|e         | fullscreen       | 1|0
+|s         | sticky           | true|false
+|u         | urgent           | true|false
 
 --json TREE  
-Use TREE instead of the output of i3-msg -t
-get_tree
+Use TREE instead of the output of  
+i3-msg -t get_tree
 
 
 --help|-h  
@@ -104,11 +106,15 @@ for ___f in "${___dir}/lib"/*; do
 done
 
 declare -A __o
-eval set -- "$(getopt --name "i3get" \
-  --options "c:i:t:n:d:m:o:ayr:hv" \
-  --longoptions "class:,instance:,title:,conid:,winid:,mark:,titleformat:,active,synk,print:,json:,help,version," \
-  -- "$@"
+options="$(
+  getopt --name "[ERROR]:i3get" \
+    --options "c:i:t:n:d:m:o:ayr:hv" \
+    --longoptions "class:,instance:,title:,conid:,winid:,mark:,titleformat:,active,synk,print:,json:,help,version," \
+    -- "$@" || exit 77
 )"
+
+eval set -- "$options"
+unset options
 
 while true; do
   case "$1" in
@@ -123,25 +129,16 @@ while true; do
     --synk       | -y ) __o[synk]=1 ;; 
     --print      | -r ) __o[print]="${2:-}" ; shift ;;
     --json       ) __o[json]="${2:-}" ; shift ;;
-    --help       | -h ) __o[help]=1 ;; 
-    --version    | -v ) __o[version]=1 ;; 
+    --help       | -h ) ___printhelp && exit ;;
+    --version    | -v ) ___printversion && exit ;;
     -- ) shift ; break ;;
     *  ) break ;;
   esac
   shift
 done
 
-if [[ ${__o[help]:-} = 1 ]]; then
-  ___printhelp
-  exit
-elif [[ ${__o[version]:-} = 1 ]]; then
-  ___printversion
-  exit
-fi
-
 [[ ${__lastarg:="${!#:-}"} =~ ^--$|${0}$ ]] \
   && __lastarg="" 
-
 
 
 

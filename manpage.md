@@ -47,7 +47,7 @@ Currently active window (default)
 `--synk`|`-y`  
 Synch on. If this option is included,  script
 will wait till target window exist. (*or timeout
-after 10 seconds*).
+after 60 seconds*).
 
 `--print`|`-r` OUTPUT  
 *OUTPUT* can be one or more of the following 
@@ -56,22 +56,23 @@ characters:
 
 |character | print            | return
 |:---------|:-----------------|:------
-|`t`       | title            | string
-|`c`       | class            | string
-|`i`       | instance         | string
-|`d`       | Window ID        | INT
-|`n`       | Con_Id (default) | INT
-|`m`       | mark             | JSON list
-|`w`       | workspace        | INT
-|`a`       | is active        | true|false
-|`f`       | floating state   | string
-|`o`       | title format     | string
-|`e`       | fullscreen       | 1|0
-|`s`       | sticky           | true|false
+|`t`         | title            | string
+|`c`         | class            | string
+|`i`         | instance         | string
+|`d`         | Window ID        | INT
+|`n`         | Con_Id (default) | INT
+|`m`         | mark             | JSON list
+|`w`         | workspace        | INT
+|`a`         | is active        | true|false
+|`f`         | floating state   | string
+|`o`         | title format     | string
+|`e`         | fullscreen       | 1|0
+|`s`         | sticky           | true|false
+|`u`         | urgent           | true|false
 
 `--json` TREE  
-Use TREE instead of the output of `i3-msg -t
-get_tree`
+Use TREE instead of the output of  
+`i3-msg -t get_tree`
 
 `--help`|`-h`  
 Show help and exit.

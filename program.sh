@@ -3,7 +3,7 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-i3get - version: 0.616
+i3get - version: 0.622
 updated: 2020-07-12 by budRich
 EOB
 }
@@ -231,7 +231,9 @@ _expression="${re//$'\n'/}"
 # within strings.
 # 
 # "title_format" and "marks" entries are only present
-# if they contain a value
+# if they contain a value.
+#
+# "name": can be null (not enclosed in quotes)
 
 # {
 #   "id": 94203263545520,
@@ -309,7 +311,7 @@ match() {
   declare -i i
   declare -A ma
 
-  [[ ${__o[print]} =~ w ]] \
+  [[ ${__o[print]} =~ w || -n ${__o[workspace]} ]] \
     && json=${_json//\"num\":/\"num${_special}\":}
 
   [[ $json =~ $_expression ]] && {

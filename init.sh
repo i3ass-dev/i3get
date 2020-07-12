@@ -3,7 +3,7 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-i3get - version: 0.616
+i3get - version: 0.622
 updated: 2020-07-12 by budRich
 EOB
 }

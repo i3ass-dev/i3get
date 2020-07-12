@@ -9,7 +9,7 @@ match() {
   declare -i i
   declare -A ma
 
-  [[ ${__o[print]} =~ w ]] \
+  [[ ${__o[print]} =~ w || -n ${__o[workspace]} ]] \
     && json=${_json//\"num\":/\"num${_special}\":}
 
   [[ $json =~ $_expression ]] && {

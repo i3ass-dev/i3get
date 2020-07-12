@@ -90,7 +90,9 @@ _expression="${re//$'\n'/}"
 # within strings.
 # 
 # "title_format" and "marks" entries are only present
-# if they contain a value
+# if they contain a value.
+#
+# "name": can be null (not enclosed in quotes)
 
 # {
 #   "id": 94203263545520,

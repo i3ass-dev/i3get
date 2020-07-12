@@ -61,12 +61,12 @@ till target window exist. (*or timeout after 60 seconds*).
 |`n`         | Con_Id (default) | INT
 |`m`         | mark             | JSON list
 |`w`         | workspace        | INT
-|`a`         | is active        | true|false
+|`a`         | is active        | true or false
 |`f`         | floating state   | string
 |`o`         | title format     | string
-|`e`         | fullscreen       | 1|0
-|`s`         | sticky           | true|false
-|`u`         | urgent           | true|false
+|`e`         | fullscreen       | 1 or 0
+|`s`         | sticky           | true or false
+|`u`         | urgent           | true or false
 
 `--json` TREE  
 Use TREE instead of the output of  

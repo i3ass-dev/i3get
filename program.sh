@@ -3,7 +3,7 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-i3get - version: 0.622
+i3get - version: 0.624
 updated: 2020-07-12 by budRich
 EOB
 }
@@ -110,12 +110,12 @@ characters:
 |n         | Con_Id (default) | INT
 |m         | mark             | JSON list
 |w         | workspace        | INT
-|a         | is active        | true|false
+|a         | is active        | true or false
 |f         | floating state   | string
 |o         | title format     | string
-|e         | fullscreen       | 1|0
-|s         | sticky           | true|false
-|u         | urgent           | true|false
+|e         | fullscreen       | 1 or 0
+|s         | sticky           | true or false
+|u         | urgent           | true or false
 
 --json TREE  
 Use TREE instead of the output of  

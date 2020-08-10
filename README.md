@@ -107,6 +107,30 @@ $ i3get --instance sublime_text --print wtf
 ~/src/bash/i3ass/i3get (i3ass) - Sublime Text
 user_off
 ```
+## updates
+
+### 2020.08.10
+
+Now uses *one* (well, sometimes two ;) single regular
+expression test in bash instead of parsing the json with
+awk, this made the script twice as fast and also, imo,
+easier to maintain and extend. I also added two new
+`--print` options, `s` for sticky status, and `e` for
+fullscreen status. But the most important change is done to
+the `--synk` functionality, which now uses `i3-msg -t
+subscribe` instead of a `while true; do sleep 10 ...`, and
+it makes everything much more responsive while at the same
+time being so much more efficient and nice on system
+recourses. Some output is different for example "marks" will
+now print the whole *JSON list* (`["mark1","mark2"...]`),
+previous behavior was to only show the first mark unqouted.
+If no value is found for a requested output (`--print`) a
+line looking like:  
+`--i3get could not find: m`  
+will be printed, previous behavior was to skip the line i
+think this new behavior is better especially if one relies
+on the order of the output lines.
+
 
 
 

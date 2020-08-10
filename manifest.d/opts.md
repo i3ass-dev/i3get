@@ -19,7 +19,7 @@ Search for windows with title.
 # options-conid-description
 Search for windows with the given con_id
 
-# options-winid-description
+# options-id-description
 Search for windows with the given window id
 
 # options-mark-description
@@ -55,3 +55,17 @@ characters:
 |`e`         | fullscreen       | 1 or 0
 |`s`         | sticky           | true or false
 |`u`         | urgent           | true or false
+
+Each character in OUTPUT will be tested and the return value will be printed on a new line. If no value is found, `--i3get could not find: CHARACTER` will get printed.
+
+In the example below, the target window did not have a mark:  
+
+```
+$ i3get -r tfcmw
+/dev/pts/9
+user_off
+URxvt
+--i3get could not find: m
+1
+```
+

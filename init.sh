@@ -3,8 +3,8 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-i3get - version: 0.626
-updated: 2020-07-12 by budRich
+i3get - version: 0.63
+updated: 2020-08-10 by budRich
 EOB
 }
 
@@ -19,7 +19,7 @@ i3get - prints info about a specific window to stdout
 
 SYNOPSIS
 --------
-i3get [--class|-c CLASS] [--instance|-i INSTANCE] [--title|-t TITLE] [--conid|-n CON_ID] [--winid|-d WIN_ID] [--mark|-m MARK] [--titleformat|-o TITLE_FORMAT] [--active|-a] [--synk|-y] [--print|-r OUTPUT] [--json TREE]      
+i3get [--class|-c CLASS] [--instance|-i INSTANCE] [--title|-t TITLE] [--conid|-n CON_ID] [--id|-d WIN_ID] [--mark|-m MARK] [--titleformat|-o TITLE_FORMAT] [--active|-a] [--synk|-y] [--print|-r OUTPUT] [--json TREE]      
 i3get --help|-h
 i3get --version|-v
 
@@ -42,7 +42,7 @@ Search for windows with title.
 Search for windows with the given con_id
 
 
---winid|-d WIN_ID  
+--id|-d WIN_ID  
 Search for windows with the given window id
 
 
@@ -85,6 +85,25 @@ characters:
 |s         | sticky           | true or false
 |u         | urgent           | true or false
 
+Each character in OUTPUT will be tested and the
+return value will be printed on a new line. If no
+value is found, --i3get could not find: CHARACTER
+will get printed.
+
+In the example below, the target window did not
+have a mark:  
+
+
+   $ i3get -r tfcmw
+   /dev/pts/9
+   user_off
+   URxvt
+   --i3get could not find: m
+   1
+
+
+
+
 --json TREE  
 Use TREE instead of the output of  
 i3-msg -t get_tree
@@ -109,7 +128,7 @@ declare -A __o
 options="$(
   getopt --name "[ERROR]:i3get" \
     --options "c:i:t:n:d:m:o:ayr:hv" \
-    --longoptions "class:,instance:,title:,conid:,winid:,mark:,titleformat:,active,synk,print:,json:,help,version," \
+    --longoptions "class:,instance:,title:,conid:,id:,mark:,titleformat:,active,synk,print:,json:,help,version," \
     -- "$@" || exit 77
 )"
 
@@ -122,7 +141,7 @@ while true; do
     --instance   | -i ) __o[instance]="${2:-}" ; shift ;;
     --title      | -t ) __o[title]="${2:-}" ; shift ;;
     --conid      | -n ) __o[conid]="${2:-}" ; shift ;;
-    --winid      | -d ) __o[winid]="${2:-}" ; shift ;;
+    --id         | -d ) __o[id]="${2:-}" ; shift ;;
     --mark       | -m ) __o[mark]="${2:-}" ; shift ;;
     --titleformat | -o ) __o[titleformat]="${2:-}" ; shift ;;
     --active     | -a ) __o[active]=1 ;; 

@@ -3,8 +3,8 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-i3get - version: 0.626
-updated: 2020-07-12 by budRich
+i3get - version: 0.63
+updated: 2020-08-10 by budRich
 EOB
 }
 
@@ -17,8 +17,12 @@ main(){
   declare -g _expression # makeexpression() via match()
   declare -i timeout
 
-  [[ -f ${__o[json]} ]] && _json=$(< "${__o[json]}")
-  : "${_json:=$(i3-msg -t get_tree)}"
+  # _toprint what information to print, 
+  # defaults to n (container id)
+  declare -g _toprint=${__o[print]:-n}
+
+  [[ -n ${_json:=${__o[json]}} ]] \
+    || _json=$(i3-msg -t get_tree)
 
   match "$_json"
 
@@ -51,7 +55,7 @@ i3get - prints info about a specific window to stdout
 
 SYNOPSIS
 --------
-i3get [--class|-c CLASS] [--instance|-i INSTANCE] [--title|-t TITLE] [--conid|-n CON_ID] [--winid|-d WIN_ID] [--mark|-m MARK] [--titleformat|-o TITLE_FORMAT] [--active|-a] [--synk|-y] [--print|-r OUTPUT] [--json TREE]      
+i3get [--class|-c CLASS] [--instance|-i INSTANCE] [--title|-t TITLE] [--conid|-n CON_ID] [--id|-d WIN_ID] [--mark|-m MARK] [--titleformat|-o TITLE_FORMAT] [--active|-a] [--synk|-y] [--print|-r OUTPUT] [--json TREE]      
 i3get --help|-h
 i3get --version|-v
 
@@ -74,7 +78,7 @@ Search for windows with title.
 Search for windows with the given con_id
 
 
---winid|-d WIN_ID  
+--id|-d WIN_ID  
 Search for windows with the given window id
 
 
@@ -116,6 +120,25 @@ characters:
 |e         | fullscreen       | 1 or 0
 |s         | sticky           | true or false
 |u         | urgent           | true or false
+
+Each character in OUTPUT will be tested and the
+return value will be printed on a new line. If no
+value is found, --i3get could not find: CHARACTER
+will get printed.
+
+In the example below, the target window did not
+have a mark:  
+
+
+   $ i3get -r tfcmw
+   /dev/pts/9
+   user_off
+   URxvt
+   --i3get could not find: m
+   1
+
+
+
 
 --json TREE  
 Use TREE instead of the output of  
@@ -167,15 +190,18 @@ done
 ((__o[active] || !${#_c[@]})) && _c[active]=true
 : "${_c[active]:=true|false}"
 
-mark='("marks":(\[[^]]*\]),)?'
-format='("title_format":"([^"]+)",)?'
-
 [[ -n ${_c[titleformat]} ]] \
-  && format="(\"title_format\":(\"${_c[titleformat]}\"),)"
+  && format="(\"title_format\":(\"${_c[titleformat]}\"),)" \
+  || format='("title_format":"([^"]+)",)?'
 
 [[ -n ${_c[mark]} ]] \
-  && mark="(\"marks\":(\[[^]]*\"${_c[mark]}\"[^]]*\]),)"
+  && mark="(\"marks\":(\[[^]]*\"${_c[mark]}\"[^]]*\]),)" \
+  || mark='("marks":(\[[^]]*\]),)?'
 
+# when workspace is important we insert the "_special"
+# character at all "num:" fields to be able to "backtrack"
+# the json. This replacement operation is somewhat expensive
+# and will slow down the overall execution of the script...
 if [[ ${__o[print]} =~ w || -n ${_c[workspace]} ]]; then
   re="\"num$_special\":(${_c[workspace]:-[0-9-]+})"
   re+=",[^$_special]+"
@@ -204,7 +230,7 @@ ${mark}
 "geometry":[^}]+},
 "name":"?(${_c[title]:-[^\"]+})"?,
 ${format}
-("window":(${_c[winid]:-[0-9]+}),
+("window":(${_c[id]:-[0-9]+}),
 [^,]+,
 "window_properties":\{
 "class":"(${_c[class]:-[^\"]+})",
@@ -219,11 +245,10 @@ ${format}
 EOB
 )
 
-# if criteria is mark || conid, window properties
-# are optional
+# if criteria is mark || conid, window properties are optional
 [[ -n ${_c[mark]}${_c[conid]}${_c[titleformat]} ]] && re+='?'
 
-# ERM "$re"
+# remove all newline characters
 _expression="${re//$'\n'/}"
 }
 
@@ -305,39 +330,42 @@ _expression="${re//$'\n'/}"
 
 match() {
 
-  local json=$1 ret=${__o[print]:-n} k
+  local json=$1 k
 
   [[ -z $_expression ]] && makeexpression
 
   declare -i i
   declare -A ma
 
-  [[ ${__o[print]} =~ w || -n ${__o[workspace]} ]] \
+  [[ $_toprint =~ w || -n ${__o[workspace]} ]] \
     && json=${_json//\"num\":/\"num${_special}\":}
 
+  # name of the keys in array "ma" match the characters
+  # that can be used as arguments to --print (_toprint)
+  # optional capture groups are collected in the dummykey O
   [[ $json =~ $_expression ]] && {
     ma=(
-      [w]="${BASH_REMATCH[$((++i))]}"
-      [n]="${BASH_REMATCH[$((++i))]}"
-      [u]="${BASH_REMATCH[$((++i))]}"
-      [O]="${BASH_REMATCH[$((++i))]}" # mark opt
-      [m]="${BASH_REMATCH[$((++i))]}"
-      [a]="${BASH_REMATCH[$((++i))]}"
-      [t]="${BASH_REMATCH[$((++i))]}"
-      [O]="${BASH_REMATCH[$((++i))]}" # titleformat opt
-      [o]="${BASH_REMATCH[$((++i))]}"
-      [O]="${BASH_REMATCH[$((++i))]}" # window opt (mark|conid)
-      [d]="${BASH_REMATCH[$((++i))]}"
-      [c]="${BASH_REMATCH[$((++i))]}"
-      [i]="${BASH_REMATCH[$((++i))]}"
-      [e]="${BASH_REMATCH[$((++i))]}"
-      [s]="${BASH_REMATCH[$((++i))]}"
-      [f]="${BASH_REMATCH[$((++i))]}"
+      [w]="${BASH_REMATCH[$((++i))]}" # "num:"             - INT
+      [n]="${BASH_REMATCH[$((++i))]}" # "id:"              - INT
+      [u]="${BASH_REMATCH[$((++i))]}" # "urgent:"          - false|true
+      [O]="${BASH_REMATCH[$((++i))]}" # ! optional group
+      [m]="${BASH_REMATCH[$((++i))]}" # "marks:"           - ["mark1","mark2"...]
+      [a]="${BASH_REMATCH[$((++i))]}" # "focused:"         - false|true
+      [t]="${BASH_REMATCH[$((++i))]}" # "name:"            - STRING
+      [O]="${BASH_REMATCH[$((++i))]}" # ! optional group
+      [o]="${BASH_REMATCH[$((++i))]}" # "title_format:"    - string
+      [O]="${BASH_REMATCH[$((++i))]}" # ! optional group
+      [d]="${BASH_REMATCH[$((++i))]}" # "window:"          - INT
+      [c]="${BASH_REMATCH[$((++i))]}" # "class:"           - STRING
+      [i]="${BASH_REMATCH[$((++i))]}" # "instance:"        - STRING
+      [e]="${BASH_REMATCH[$((++i))]}" # "fullscreen_mode:" - 0|1
+      [s]="${BASH_REMATCH[$((++i))]}" # "sticky:"          - true|false
+      [f]="${BASH_REMATCH[$((++i))]}" # "floating:"        - auto_off|auto_on|user_off|user_on
     )
 
-    for ((i=0;i<${#ret};i++)); do
-      k=${ret:$i:1}
-      _op+=("${ma[$k]:-$k: NA}")
+    for ((i=0;i<${#_toprint};i++)); do
+      k=${_toprint:$i:1}
+      _op+=("${ma[$k]:---i3get could not find: $k}")
     done
 
   }
@@ -348,7 +376,7 @@ declare -A __o
 options="$(
   getopt --name "[ERROR]:i3get" \
     --options "c:i:t:n:d:m:o:ayr:hv" \
-    --longoptions "class:,instance:,title:,conid:,winid:,mark:,titleformat:,active,synk,print:,json:,help,version," \
+    --longoptions "class:,instance:,title:,conid:,id:,mark:,titleformat:,active,synk,print:,json:,help,version," \
     -- "$@" || exit 77
 )"
 
@@ -361,7 +389,7 @@ while true; do
     --instance   | -i ) __o[instance]="${2:-}" ; shift ;;
     --title      | -t ) __o[title]="${2:-}" ; shift ;;
     --conid      | -n ) __o[conid]="${2:-}" ; shift ;;
-    --winid      | -d ) __o[winid]="${2:-}" ; shift ;;
+    --id         | -d ) __o[id]="${2:-}" ; shift ;;
     --mark       | -m ) __o[mark]="${2:-}" ; shift ;;
     --titleformat | -o ) __o[titleformat]="${2:-}" ; shift ;;
     --active     | -a ) __o[active]=1 ;; 

@@ -7,8 +7,12 @@ main(){
   declare -g _expression # makeexpression() via match()
   declare -i timeout
 
-  [[ -f ${__o[json]} ]] && _json=$(< "${__o[json]}")
-  : "${_json:=$(i3-msg -t get_tree)}"
+  # _toprint what information to print, 
+  # defaults to n (container id)
+  declare -g _toprint=${__o[print]:-n}
+
+  [[ -n ${_json:=${__o[json]}} ]] \
+    || _json=$(i3-msg -t get_tree)
 
   match "$_json"
 

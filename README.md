@@ -5,7 +5,7 @@ USAGE
 
 Search for `CRITERIA` in the output of `i3-msg -t
 get_tree`, return desired information. If no arguments are
-passed. `con_id` of acitve window is returned. If there is
+passed, `con_id` of active window is returned. If there is
 more then one criterion, all of them must be true to get
 results.
 
@@ -14,7 +14,7 @@ OPTIONS
 -------
 
 ```text
-i3get [--class|-c CLASS] [--instance|-i INSTANCE] [--title|-t TITLE] [--conid|-n CON_ID] [--winid|-d WIN_ID] [--mark|-m MARK] [--titleformat|-o TITLE_FORMAT] [--active|-a] [--synk|-y] [--print|-r OUTPUT] [--json TREE]      
+i3get [--class|-c CLASS] [--instance|-i INSTANCE] [--title|-t TITLE] [--conid|-n CON_ID] [--id|-d WIN_ID] [--mark|-m MARK] [--titleformat|-o TITLE_FORMAT] [--active|-a] [--synk|-y] [--print|-r OUTPUT] [--json TREE]      
 i3get --help|-h
 i3get --version|-v
 ```
@@ -32,7 +32,7 @@ Search for windows with title.
 `--conid`|`-n` CON_ID  
 Search for windows with the given con_id
 
-`--winid`|`-d` WIN_ID  
+`--id`|`-d` WIN_ID  
 Search for windows with the given window id
 
 `--mark`|`-m` MARK  
@@ -68,6 +68,23 @@ till target window exist. (*or timeout after 60 seconds*).
 |`s`         | sticky           | true or false
 |`u`         | urgent           | true or false
 
+Each character in OUTPUT will be tested and the return
+value will be printed on a new line. If no value is found,
+`--i3get could not find: CHARACTER` will get printed.
+
+In the example below, the target window did not have a
+mark:  
+
+```
+$ i3get -r tfcmw
+/dev/pts/9
+user_off
+URxvt
+--i3get could not find: m
+1
+```
+
+
 `--json` TREE  
 Use TREE instead of the output of  
 `i3-msg -t get_tree`
@@ -85,7 +102,7 @@ search for window with instance name sublime_text.  Request
 workspace, title and floating state.  
 
 ``` shell
-$ i3get --instance sublime_text -r wtf 
+$ i3get --instance sublime_text --print wtf 
 1
 ~/src/bash/i3ass/i3get (i3ass) - Sublime Text
 user_off

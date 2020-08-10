@@ -27,15 +27,18 @@ done
 ((__o[active] || !${#_c[@]})) && _c[active]=true
 : "${_c[active]:=true|false}"
 
-mark='("marks":(\[[^]]*\]),)?'
-format='("title_format":"([^"]+)",)?'
-
 [[ -n ${_c[titleformat]} ]] \
-  && format="(\"title_format\":(\"${_c[titleformat]}\"),)"
+  && format="(\"title_format\":(\"${_c[titleformat]}\"),)" \
+  || format='("title_format":"([^"]+)",)?'
 
 [[ -n ${_c[mark]} ]] \
-  && mark="(\"marks\":(\[[^]]*\"${_c[mark]}\"[^]]*\]),)"
+  && mark="(\"marks\":(\[[^]]*\"${_c[mark]}\"[^]]*\]),)" \
+  || mark='("marks":(\[[^]]*\]),)?'
 
+# when workspace is important we insert the "_special"
+# character at all "num:" fields to be able to "backtrack"
+# the json. This replacement operation is somewhat expensive
+# and will slow down the overall execution of the script...
 if [[ ${__o[print]} =~ w || -n ${_c[workspace]} ]]; then
   re="\"num$_special\":(${_c[workspace]:-[0-9-]+})"
   re+=",[^$_special]+"
@@ -64,7 +67,7 @@ ${mark}
 "geometry":[^}]+},
 "name":"?(${_c[title]:-[^\"]+})"?,
 ${format}
-("window":(${_c[winid]:-[0-9]+}),
+("window":(${_c[id]:-[0-9]+}),
 [^,]+,
 "window_properties":\{
 "class":"(${_c[class]:-[^\"]+})",
@@ -79,11 +82,10 @@ ${format}
 EOB
 )
 
-# if criteria is mark || conid, window properties
-# are optional
+# if criteria is mark || conid, window properties are optional
 [[ -n ${_c[mark]}${_c[conid]}${_c[titleformat]} ]] && re+='?'
 
-# ERM "$re"
+# remove all newline characters
 _expression="${re//$'\n'/}"
 }
 

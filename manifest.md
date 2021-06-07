@@ -1,15 +1,15 @@
 ---
 description: >
   prints info about a specific window to stdout
-updated:       2021-05-28
-version:       0.632
+updated:       2021-06-07
+version:       0.7
 author:        budRich
 repo:          https://github.com/budlabs/i3ass
 created:       2017-03-08
-dependencies:  [bash, i3]
+dependencies:  [bash, i3, gawk]
 see-also:      [bash(1), i3(1)]
 synopsis: |
-    [--class|-c CLASS] [--instance|-i INSTANCE] [--title|-t TITLE] [--conid|-n CON_ID] [--id|-d WIN_ID] [--mark|-m MARK] [--titleformat|-o TITLE_FORMAT] [--active|-a] [--synk|-y] [--print|-r OUTPUT] [--json TREE]      
+    [--class|-c CLASS] [--instance|-i INSTANCE] [--title|-t TITLE] [--conid|-n CON_ID] [--id|-d WIN_ID] [--mark|-m MARK] [--titleformat|-o TITLE_FORMAT] [--active|-a] [--synk|-y] [--print|-r OUTPUT] [--json TREE]
     --help|-h
     --version|-v
 ...

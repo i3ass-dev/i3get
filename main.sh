@@ -1,43 +1,22 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 main(){
 
-  declare -a _op         # output, populated in match()
-  declare -r _special= # used when searching for ws
-  declare -g _expression # makeexpression() via match()
-  declare -i timeout
+  result=$(get_window)
 
-  # _toprint what information to print, 
-  # defaults to n (container id)
-  declare -g _toprint=${__o[print]:-n}
+  timeout=$SECONDS
 
-  [[ -n ${_json:=${__o[json]}} ]] \
-    || _json=$(i3-msg -t get_tree)
+  ((__o[synk])) && until [[ $result ]]; do
+    i3-msg -qt subscribe '["window"]'
+    result=$(get_window)
+    ((SECONDS-timeout > 60)) && break
+  done
 
-  match "$_json"
-
-  ((__o[synk])) && [[ -z "${_op[*]}" ]] && {
-
-    timeout=$SECONDS
-
-    match "$(i3-msg -t get_tree)"
-
-    while [[ -z "${_op[*]}" ]]; do
-      ((SECONDS-timeout > 60)) && break
-      i3-msg -qt subscribe '["window"]'
-      match "$(i3-msg -t get_tree)"
-    done
-  }
-
-  [[ -n ${_op[*]} ]] && {
-    printf '%s\n' "${_op[@]}"
-    exit
-  }
-
-  ERX "no matching window."
+  [[ $result ]] || ERX "no matching window"
+  echo "$result"
 }
 
 ___source="$(readlink -f "${BASH_SOURCE[0]}")"  #bashbud
 ___dir="${___source%/*}"                        #bashbud
 source "$___dir/init.sh"                        #bashbud
-main "$@"                                       #bashbud
+main "${@}"                                     #bashbud
